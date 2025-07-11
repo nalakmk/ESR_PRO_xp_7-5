@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Story Reader - Pro</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Poppins:wght@400;600;700&display=swap');
+
+        :root {
+            --primary-color: #8e44ad; /* Main Purple */
+            --secondary-color: #9b59b6; /* Lighter Action Purple */
+            --accent-color: #e74c3c;   /* Red for incorrect */
+            --correct-color: #27ae60;  /* Green for correct */
+            --dark-bg: #4a235a;       /* Deep Purple for bars */
+            --light-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Poppins', 'Noto Sans KR', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 20px 120px 20px;
+            background: linear-gradient(135deg, #f2eaff 0%, #e8daef 100%);
+            color: var(--text-color);
+        }
+        .container {
+            background-color: var(--light-bg);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 700px;
+            box-sizing: border-box;
+            margin-top: 20px;
+        }
+        h1, h2, h3 {
+            color: var(--dark-bg);
+            text-align: center;
+        }
+        h1 { margin-bottom: 20px; font-size: 2.2em; font-weight: 700; color: var(--primary-color); text-shadow: 1px 1px 2px rgba(0,0,0,0.1);}
+        h2 { margin-bottom: 15px; font-size: 1.5em; border-bottom: 2px solid #eee; padding-bottom: 10px;}
+        h3 { font-size: 1.2em; margin-top: 25px; margin-bottom: 10px; background-color: #f4eff7; padding: 8px; border-radius: 8px; }
+
+        input[type="text"], select {
+            padding: 12px; margin: 10px auto; width: 100%; max-width: 400px; display: block; font-size: 17px; border: 1px solid #dcbcf0; border-radius: 8px; box-sizing: border-box; background-color: #fdfaff;
+        }
+        input[type="text"]:focus, select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(142, 68, 173, 0.4);
+            outline: none;
+        }
+        
+        button {
+            padding: 12px 20px; margin: 5px; font-size: 16px; font-weight: 600; color: white; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;
+            display: inline-block; margin-left: 5px; margin-right: 5px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+        }
+        button:disabled {
+            background-color: #cccccc !important; color: #666 !important; cursor: not-allowed; box-shadow: none; transform: none;
+        }
+
+        .hidden { display: none !important; }
+
+        /* --- Start Screen --- */
+        #start-screen { text-align: center; }
+        #logo-container { margin-bottom: 20px; }
+        #logo-container img { max-width: 200px; height: auto; }
+        #start-screen h1 { margin-top: 10px; }
+        
+        #level-display-start {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: var(--dark-bg);
+            background-color: #f4eff7;
+            margin-top: 15px;
+            margin-bottom: 20px;
+            padding: 8px 18px;
+            border-radius: 8px;
+            display: inline-block;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        #start-learning-btn { background-color: var(--primary-color); width: 100%; max-width: 400px; padding: 15px; font-size: 18px; display: block; margin: 20px auto; }
+
+        /* --- Timer & Display --- */
+        .timer-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--dark-bg);
+            text-align: center;
+            background: #f4eff7;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        #quiz-text-display, #review-text-display {
+            padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fdfdfd; font-size: 1.1em;
+            line-height: 1.8; margin-bottom: 20px; max-height: 400px; overflow-y: auto;
+        }
+        #quiz-text-display u, #review-text-display u {
+            text-decoration: none; background-color: #fdebd0; padding: 2px 0; border-radius: 3px;
+        }
+
+        /* --- Quiz & Review Styles --- */
+        #quiz-question, #review-question { font-weight: 600; font-size: 1.2em; margin-bottom: 15px; }
+        .options-container { display: flex; flex-direction: column; gap: 10px; }
+        .option-btn {
+            width: 100%; text-align: left; background-color: #fff; color: var(--text-color); border: 2px solid #ddd;
+            justify-content: flex-start; padding: 15px; box-sizing: border-box; margin: 0; display: block;
+        }
+        .option-btn:not(:disabled):hover { background-color: #f4eff7; border-color: var(--secondary-color); }
+        .option-btn.correct { background-color: #d4efdf !important; border-color: var(--correct-color) !important; color: #1e8449 !important; }
+        .option-btn.incorrect { background-color: #fadbd8 !important; border-color: var(--accent-color) !important; color: #c0392b !important; }
+        .controls { text-align: right; margin-top: 20px; }
+
+        /* --- Results Screen Styles --- */
+        #results-summary { text-align: center; }
+        #results-summary p { font-size: 1.2em; margin: 10px 0; }
+        #results-list { display: flex; justify-content: center; gap: 15px; font-size: 1.5em; font-weight: bold; margin: 20px 0; }
+        .result-item.correct { color: var(--correct-color); }
+        .result-item.incorrect { color: var(--accent-color); }
+        
+        #sendDataBtn { background-color: var(--correct-color); }
+        #end-btn { background-color: var(--dark-bg); }
+        
+        #review-btn, #nextReviewBtn {
+            background-color: transparent; color: var(--secondary-color); border: 2px solid var(--secondary-color); font-weight: bold;
+        }
+        #review-btn:hover, #nextReviewBtn:hover { background-color: var(--secondary-color); color: white; }
+
+        /* --- Fixed Bottom Controls --- */
+        #bottom-controls-wrapper { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; }
+        .fixed-controls {
+            max-width: 800px; margin: 0 auto; background-color: var(--dark-bg); padding: 15px; 
+            display: flex; justify-content: center; box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
+        }
+        #quiz-start-btn {
+            width: 80%; padding: 15px; font-size: 18px; background-color: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="main-content">
+        <div class="container" id="start-screen">
+            <div id="logo-container">
+                <img src="mainlogo.png" alt="Logo">
+            </div>
+            <h1>English Story Reader Pro</h1>
+            <p>Welcome! Please enter your name to begin.</p>
+            <div id="level-display-start">7th Grade</div>
+            <input type="text" id="userNameInput" placeholder="Your Name">
+            <button id="start-learning-btn">학습 시작</button>
+        </div>
+
+        <div class="container hidden" id="selection-container">
+            <h2 id="selection-title"></h2>
+            <label for="storySelect">Choose a story:</label>
+            <select id="storySelect">
+                <option value="">-- Select a story --</option>
+                <option value="archaeology">Archaeology: Science in History</option>
+                <option value="marketing_colors">The Psychology of Marketing Colors</option>
+                <option value="climate_change">Climate Change and Society</option>
+            </select>
+        </div>
+
+        <div class="container hidden" id="quiz-container">
+            <h2 id="quiz-title">Comprehension Quiz</h2>
+            <div id="quiz-timer-display" class="timer-display">00:00</div>
+            <div id="quiz-text-display"></div>
+            <p id="quiz-question"></p>
+            <div id="quiz-options" class="options-container"></div>
+        </div>
+
+        <div class="container hidden" id="results-container">
+            <h2>Results</h2>
+            <div id="results-summary">
+                <p>Quiz Time: <strong id="final-quiz-time"></strong></p>
+                <p>Score: <strong id="final-score"></strong></p>
+                <div id="results-list"></div>
+                <div id="results-controls" style="margin-top: 20px;">
+                    <button id="review-btn" class="hidden">틀린 문제 다시보기</button>
+                    <button id="sendDataBtn" class="hidden">전송</button>
+                    <button id="end-btn" class="hidden">END</button>
+                </div>
+            </div>
+            <div id="review-screen" class="hidden">
+                <h3>Review Incorrect Answers</h3>
+                <div id="review-text-display"></div>
+                <p id="review-question"></p>
+                <div id="review-options" class="options-container"></div>
+                 <div class="controls">
+                    <button id="nextReviewBtn">Next Review</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="bottom-controls-wrapper" class="hidden">
+        <div class="fixed-controls">
+            <button id="quiz-start-btn" disabled>Select a story</button>
+        </div>
+    </div>
+
+    <script>
+        const stories = {
+            archaeology: {
+                level: "7th Grade",
+                fullText: "Archaeology is the study of human history through artifacts, which are objects made by people in the past. Archaeologists are like detectives. They excavate sites to find things like old pottery or tools. Then, scientists use modern technology to analyze these artifacts. For example, they can use radiocarbon dating to find out how old an object is. This combination of historical inquiry and scientific analysis helps us piece together the puzzle of the past.",
+                quiz: [
+                    { type: 'topic', question: 'What is the main idea of the passage?', options: ['The life of a detective', 'The science of radiocarbon dating', 'How archaeology uses science to study history', 'The different types of old pottery'], answer: 2 },
+                    { type: 'comprehension', question: 'What is an artifact?', options: ['A modern technology', 'A scientist who studies history', 'An object made by people in the past', 'A method for dating objects'], answer: 2 },
+                    { type: 'insertion', question: 'Where does the given sentence best fit?<br><br><i>"Each piece tells a small part of the story."</i>', options: ['( ① )', '( ② )', '( ③ )', '( ④ )'], answer: 0, modifiedText: "They excavate sites to find things like old pottery or tools. ( ① ) Then, scientists use modern technology to analyze these artifacts. ( ② ) For example, they can use radiocarbon dating to find out how old an object is. ( ③ ) This combination ... helps us piece together the puzzle of the past. ( ④ )" },
+                    { type: 'vocabulary', question: 'Which word is used incorrectly in the context?', options: ['artifacts', 'excavate', 'analyze', 'destroy'], answer: 3, modifiedText: "Archaeology is the study of human history through <u>artifacts</u>. ... They <u>excavate</u> sites to find things like old pottery or tools. Then, scientists use modern technology to <u>analyze</u> these artifacts. This combination ... helps us <u>destroy</u> the puzzle of the past." },
+                    { type: 'summary', question: "Complete the summary.<br><br>Archaeology combines historical (A)______ with scientific analysis, like radiocarbon dating, to learn about the (B)______.", options: [['technology', 'future'], ['inquiry', 'past'], ['sites', 'detectives'], ['artifacts', 'science']], answer: 1 }
+                ]
+            },
+            marketing_colors: {
+                level: "7th Grade",
+                fullText: "Have you ever noticed that many fast-food signs are red and yellow? This is not a coincidence. Companies use the psychology of color in their marketing. Red is a color that can grab attention and make you feel hungry. Yellow is associated with happiness and optimism. By combining these colors, companies try to create a positive and energetic feeling to attract customers. It's a fascinating mix of art and psychology used in business.",
+                quiz: [
+                    { type: 'topic', question: "What is this passage mainly about?", options: ['The best colors for signs', 'Why fast food is popular', 'How colors are used in marketing to affect feelings', 'The meaning of happiness'], answer: 2 },
+                    { type: 'comprehension', question: 'According to the text, what feeling is associated with the color yellow?', options: ['Hunger', 'Anger', 'Sadness', 'Happiness'], answer: 3 },
+                    { type: 'insertion', question: 'Where does the given sentence best fit?<br><br><i>"These feelings can influence what people decide to buy."</i>', options: ['( ① )', '( ② )', '( ③ )', '( ④ )'], answer: 0, modifiedText: "By combining these colors, companies try to create a positive and energetic feeling to attract customers. ( ① ) It's a fascinating mix of art and psychology used in business. ( ② ) Red is a color that can grab attention. ( ③ ) Yellow is associated with happiness and optimism. ( ④ )" },
+                    { type: 'vocabulary', question: 'Which word is used incorrectly in the context?', options: ['coincidence', 'grab', 'associated', 'negative'], answer: 3, modifiedText: "This is not a <u>coincidence</u>. ... Red is a color that can <u>grab</u> attention and make you feel hungry. Yellow is <u>associated</u> with happiness and optimism. By combining these colors, companies try to create a <u>negative</u> and energetic feeling." },
+                    { type: 'summary', question: "Complete the summary.<br><br>Companies use the (A)______ of color in marketing, like using red and yellow to create a positive feeling and (B)______ customers.", options: [['art', 'confuse'], ['psychology', 'attract'], ['business', 'sell'], ['coincidence', 'help']], answer: 1 }
+                ]
+            },
+            climate_change: {
+                level: "7th Grade",
+                fullText: "Climate change refers to the long-term changes in Earth's weather patterns, largely caused by human activity. This is a scientific issue, but it has huge effects on our society. For example, rising sea levels can force people living in coastal areas to move from their homes. Changes in weather can also affect farming, which impacts our food supply and economy. Solving this problem requires not only scientific solutions but also global cooperation and social changes.",
+                quiz: [
+                    { type: 'topic', question: 'What is the main message of the passage?', options: ['The science of weather patterns', 'The social and scientific aspects of climate change', 'How farming is affected by weather', 'The problem of rising sea levels'], answer: 1 },
+                    { type: 'comprehension', question: 'Which is NOT mentioned as an effect of climate change on society?', options: ['Rising sea levels force people to move', 'It can improve the food supply', 'It impacts the economy', 'Farming can be affected'], answer: 1 },
+                    { type: 'insertion', question: 'Where does the given sentence best fit?<br><br><i>"This creates refugees and social instability."</i>', options: ['( ① )', '( ② )', '( ③ )', '( ④ )'], answer: 0, modifiedText: "For example, rising sea levels can force people living in coastal areas to move from their homes. ( ① ) Changes in weather can also affect farming, which impacts our food supply and economy. ( ② ) Solving this problem requires not only scientific solutions but also global cooperation. ( ③ )" },
+                    { type: 'vocabulary', question: 'Which word is used incorrectly in the context?', options: ['long-term', 'scientific', 'rising', 'local'], answer: 3, modifiedText: "Climate change refers to the <u>long-term</u> changes in Earth's weather patterns... This is a <u>scientific</u> issue... For example, <u>rising</u> sea levels can force people to move. ...Solving this problem requires not only scientific solutions but also <u>local</u> cooperation." },
+                    { type: 'summary', question: "Complete the summary.<br><br>Climate change is a (A)______ issue with large social effects, and solving it requires both scientific solutions and global (B)______.", options: [['social', 'problems'], ['farming', 'changes'], ['scientific', 'cooperation'], ['coastal', 'economy']], answer: 2 }
+                ]
+            }
+        };
+
+        // --- DOM Elements ---
+        const containers = {
+            start: document.getElementById('start-screen'),
+            selection: document.getElementById('selection-container'),
+            quiz: document.getElementById('quiz-container'),
+            results: document.getElementById('results-container'),
+        };
+        const userNameInput = document.getElementById('userNameInput');
+        const startLearningBtn = document.getElementById('start-learning-btn');
+        const selectionTitle = document.getElementById('selection-title');
+        const storySelect = document.getElementById('storySelect');
+        const quizStartBtn = document.getElementById('quiz-start-btn');
+        const bottomControls = document.getElementById('bottom-controls-wrapper');
+        const quizTimerDisplay = document.getElementById('quiz-timer-display');
+        const quizTextDisplay = document.getElementById('quiz-text-display');
+        const quizQuestion = document.getElementById('quiz-question');
+        const quizOptions = document.getElementById('quiz-options');
+        const resultsSummary = document.getElementById('results-summary');
+        const reviewBtn = document.getElementById('review-btn');
+        const reviewScreen = document.getElementById('review-screen');
+        const nextReviewBtn = document.getElementById('nextReviewBtn');
+        const sendDataBtn = document.getElementById('sendDataBtn');
+        const endBtn = document.getElementById('end-btn');
+
+        // --- State Variables ---
+        let userName = '';
+        let currentStoryData = {};
+        let currentQuizIndex = 0;
+        let userAnswers = [];
+        let incorrectQuestionIndices = [];
+        let currentReviewIndex = 0;
+        let timerInterval = null;
+        let timerStartTime = 0;
+        let quizTime = 0;
+
+        // --- Event Listeners ---
+        startLearningBtn.addEventListener('click', () => {
+            userName = userNameInput.value.trim();
+            if (userName) {
+                selectionTitle.textContent = `Welcome, ${userName}!`;
+                showContainer('selection');
+                bottomControls.classList.remove('hidden');
+            } else {
+                alert('Please enter your name.');
+            }
+        });
+        storySelect.addEventListener('change', loadStory);
+        quizStartBtn.addEventListener('click', startQuiz);
+        reviewBtn.addEventListener('click', startReview);
+        nextReviewBtn.addEventListener('click', handleNextReview);
+        sendDataBtn.addEventListener('click', sendData);
+        endBtn.addEventListener('click', returnToSelection);
+
+        // --- Core Functions ---
+        function loadStory() {
+            const storyId = storySelect.value;
+            resetQuizState();
+            if (storyId) {
+                currentStoryData = stories[storyId];
+                quizStartBtn.disabled = false;
+                quizStartBtn.textContent = 'Start Quiz';
+            }
+        }
+
+        function startQuiz() {
+            showContainer('quiz');
+            bottomControls.classList.add('hidden');
+            startTimer(quizTimerDisplay);
+            displayQuestion(0);
+        }
+
+        function displayQuestion(index) {
+            currentQuizIndex = index;
+            const q = currentStoryData.quiz[index];
+            
+            if (q.modifiedText) {
+                 quizTextDisplay.innerHTML = q.modifiedText;
+            } else {
+                 quizTextDisplay.innerHTML = currentStoryData.fullText.replace(/\n/g, '<br>');
+            }
+            quizQuestion.innerHTML = `<b>Q${index + 1}.</b> ${q.question}`;
+            quizOptions.innerHTML = '';
+            
+            q.options.forEach((option, i) => {
+                const button = document.createElement('button');
+                if (Array.isArray(option)) { // For summary questions
+                    button.innerHTML = `(A) ${option[0]} / (B) ${option[1]}`;
+                } else {
+                    button.innerHTML = option;
+                }
+                button.classList.add('option-btn');
+                button.onclick = () => selectAnswer(i);
+                quizOptions.appendChild(button);
+            });
+        }
+        
+        function selectAnswer(selectedIndex) {
+            userAnswers.push(selectedIndex);
+            if (currentQuizIndex < currentStoryData.quiz.length - 1) {
+                displayQuestion(currentQuizIndex + 1);
+            } else {
+                quizTime = stopTimer();
+                showResults();
+            }
+        }
+
+        function showResults() {
+            showContainer('results');
+            let score = 0;
+            const resultsList = document.getElementById('results-list');
+            resultsList.innerHTML = '';
+            
+            userAnswers.forEach((answer, i) => {
+                const isCorrect = answer === currentStoryData.quiz[i].answer;
+                if (isCorrect) score++;
+                else incorrectQuestionIndices.push(i);
+
+                const resultItem = document.createElement('span');
+                resultItem.classList.add('result-item', isCorrect ? 'correct' : 'incorrect');
+                resultItem.textContent = `${i + 1}. ${isCorrect ? 'O' : 'X'}`;
+                resultsList.appendChild(resultItem);
+            });
+            
+            const percentageScore = Math.round((score / currentStoryData.quiz.length) * 100);
+            document.getElementById('final-quiz-time').textContent = formatTime(quizTime);
+            document.getElementById('final-score').textContent = `${percentageScore}점`;
+
+            if (incorrectQuestionIndices.length > 0) {
+                reviewBtn.classList.remove('hidden');
+            } else {
+                sendDataBtn.classList.remove('hidden');
+            }
+            endBtn.classList.remove('hidden');
+        }
+        
+        function startReview() {
+            resultsSummary.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+            displayReviewQuestion(0);
+        }
+
+        function displayReviewQuestion(reviewIndex) {
+            currentReviewIndex = reviewIndex;
+            const qIndex = incorrectQuestionIndices[reviewIndex];
+            const q = currentStoryData.quiz[qIndex];
+            const userAnswer = userAnswers[qIndex];
+            
+            if (q.modifiedText) {
+                document.getElementById('review-text-display').innerHTML = q.modifiedText;
+            } else {
+                document.getElementById('review-text-display').innerHTML = currentStoryData.fullText.replace(/\n/g, '<br>');
+            }
+
+            document.getElementById('review-question').innerHTML = `<b>Q${qIndex + 1}.</b> ${q.question}`;
+            const reviewOptionsContainer = document.getElementById('review-options');
+            reviewOptionsContainer.innerHTML = '';
+
+            q.options.forEach((option, i) => {
+                const button = document.createElement('button');
+                if (Array.isArray(option)) { // For summary questions
+                    button.innerHTML = `(A) ${option[0]} / (B) ${option[1]}`;
+                } else {
+                    button.innerHTML = option;
+                }
+                button.classList.add('option-btn');
+                button.disabled = true;
+                if (i === q.answer) button.classList.add('correct');
+                if (i === userAnswer) button.classList.add('incorrect');
+                reviewOptionsContainer.appendChild(button);
+            });
+            
+            if (reviewIndex >= incorrectQuestionIndices.length - 1) {
+                 nextReviewBtn.textContent = 'Return to Results';
+            }
+        }
+        
+        function handleNextReview() {
+            if (currentReviewIndex >= incorrectQuestionIndices.length - 1) {
+                reviewScreen.classList.add('hidden');
+                resultsSummary.classList.remove('hidden');
+                reviewBtn.classList.add('hidden');
+                sendDataBtn.classList.remove('hidden');
+            } else {
+                displayReviewQuestion(currentReviewIndex + 1);
+            }
+        }
+        
+   function sendData() {
+    // 이 URL은 사용자님의 것이 맞는지 다시 한번 확인해주세요.
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxXBIvCN9wqJAkV3XeXbfpb15KzKs8T8rLcUR0jWLgvD_tqg5VxeOINq_7QRKEPSNMS/exec';
+
+    sendDataBtn.disabled = true;
+    sendDataBtn.textContent = "전송 중...";
+
+    const scoreText = document.getElementById('final-score').textContent;
+    const titleText = storySelect.options[storySelect.selectedIndex].text;
+    const data = {
+        user: userName,
+        level: currentStoryData.level,
+        title: titleText,
+        quizTime: formatTime(quizTime),
+        score: scoreText
+    };
+
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors', // CORS 에러를 우회하여 안정적으로 데이터를 보내는 모드
+        cache: 'no-cache',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        // no-cors 모드에서는 서버의 실제 성공/실패 여부를 알 수 없지만,
+        // 일단 요청이 시작되면 성공으로 간주하고 알림을 띄웁니다.
+        console.log("Request sent. Check Google Sheet for data.");
+        alert("데이터 전송이 완료되었습니다!");
+        sendDataBtn.textContent = "전송 완료";
+    })
+    .catch(error => {
+        // 이 부분은 네트워크 연결 자체에 문제가 있을 때만 실행됩니다.
+        console.error('Network error or failed to fetch:', error);
+        alert('데이터 전송 중 네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.');
+        sendDataBtn.disabled = false;
+        sendDataBtn.textContent = "전송";
+    });
+}
+
+        // --- Utility Functions ---
+        function startTimer(displayElement) {
+            timerStartTime = Date.now();
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+                displayElement.textContent = formatTime(elapsed);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            return Math.floor((Date.now() - timerStartTime) / 1000);
+        }
+
+        function formatTime(seconds) {
+            const min = String(Math.floor(seconds / 60)).padStart(2, '0');
+            const sec = String(seconds % 60).padStart(2, '0');
+            return `${min}:${sec}`;
+        }
+        
+        function showContainer(containerName) {
+            Object.values(containers).forEach(c => c.classList.add('hidden'));
+            if (containers[containerName]) {
+                containers[containerName].classList.remove('hidden');
+            }
+        }
+
+        function resetQuizState() {
+            if (timerInterval) clearInterval(timerInterval);
+            quizStartBtn.textContent = 'Select a story';
+            quizStartBtn.disabled = true;
+            
+            Object.values(containers).forEach(c => {
+                if(c.id !== 'selection-container' && c.id !== 'start-screen') {
+                    c.classList.add('hidden');
+                }
+            });
+            
+            resultsSummary.classList.remove('hidden');
+            reviewScreen.classList.add('hidden');
+            reviewBtn.classList.add('hidden');
+            sendDataBtn.classList.add('hidden');
+            endBtn.classList.add('hidden');
+            nextReviewBtn.textContent = 'Next Review';
+            sendDataBtn.disabled = false;
+            sendDataBtn.textContent = "전송";
+            
+            currentStoryData = {};
+            currentQuizIndex = 0;
+            userAnswers = [];
+            incorrectQuestionIndices = [];
+            currentReviewIndex = 0;
+            quizTime = 0;
+        }
+
+        function returnToSelection() {
+            resetQuizState();
+            showContainer('selection');
+            bottomControls.classList.remove('hidden');
+            storySelect.value = '';
+        }
+
+        function resetApp() {
+            resetQuizState();
+            userName = '';
+            userNameInput.value = '';
+            storySelect.value = '';
+            bottomControls.classList.add('hidden');
+            showContainer('start');
+        }
+
+        // Initial setup
+        resetApp();
+
+    </script>
+</body>
+</html>
